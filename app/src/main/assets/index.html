@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NetScope X — Network Toolkit</title>
+  <style>
+    :root{
+      --bg:#060a12; --p:#0e1625; --p2:#131e31; --line:#ffffff14; --txt:#eef5ff; --muted:#91a0b8;
+      --blue:#5ea3ff; --green:#36d399; --red:#ff6b6b; --yellow:#ffc857;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{
+      background:radial-gradient(circle at 50% -10%, #1a3158, #070b13 42%);
+      color:var(--txt); font-family:Tahoma,"Segoe UI",Arial,sans-serif; padding:18px; min-height:100vh;
+    }
+    .wrap{max-width:1400px; margin:0 auto}
+    .top{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:18px}
+    .brand{flex:1; min-width:200px}
+    .brand h1{margin:0; font-size:clamp(1.8rem,4vw,2.8rem)}
+    .brand p{margin:5px 0 0; color:var(--muted); font-size:0.9rem}
+    .toolbar,.actions{display:flex; gap:8px; flex-wrap:wrap}
+    button,input,select,textarea{
+      font:inherit; border:1px solid var(--line); border-radius:11px; padding:10px 12px;
+      background:var(--p2); color:var(--txt);
+    }
+    button{cursor:pointer; font-weight:700; background:linear-gradient(135deg,#5ea3ff,#347dff); border:0; transition:transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease; white-space:nowrap}
+    button:hover:not(:disabled){transform:translateY(-1px); box-shadow:0 8px 20px rgba(94,163,255,0.25)}
+    button.secondary{background:#172338; border:1px solid var(--line); color:var(--txt)}
+    button:disabled{opacity:0.55; cursor:not-allowed; transform:none}
+    input,select,textarea{min-width:0}
+    input:focus,select:focus,textarea:focus{outline:none; border-color:var(--blue); box-shadow:0 0 0 2px rgba(94,163,255,0.12)}
+    textarea{width:100%; min-height:120px; resize:vertical; line-height:1.7}
+    .tabs{display:flex; gap:7px; overflow-x:auto; margin-bottom:14px; padding-bottom:8px}
+    .tab{background:#0d1523; border:1px solid var(--line); color:var(--muted); white-space:nowrap; cursor:pointer; transition:all 0.2s ease; padding:8px 12px; border-radius:8px}
+    .tab.active{color:#fff; background:#18345d; border-color:rgba(94,163,255,0.4)}
+    .panel{background:rgba(14,22,37,0.95); border:1px solid var(--line); border-radius:18px; box-shadow:0 20px 55px rgba(0,0,0,0.35)}
+    .body{padding:17px}
+    .tabpage{display:none}
+    .tabpage.active{display:block}
+    .form{display:grid; grid-template-columns:1fr 150px auto; gap:9px}
+    .form.wide{grid-template-columns:1fr}
+    .hint{font-size:0.75rem; color:var(--muted); margin-top:8px; line-height:1.4}
+    .stats{display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:9px; margin-top:14px}
+    .stat{border:1px solid var(--line); border-radius:13px; padding:13px; background:rgba(255,255,255,0.04)}
+    .label{color:var(--muted); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.5px}
+    .value{font-weight:800; font-size:1.25rem; margin-top:6px; word-break:break-word}
+    .good{color:var(--green)!important}
+    .bad{color:var(--red)!important}
+    .warn{color:var(--yellow)!important}
+    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px}
+    .box{border:1px solid var(--line); border-radius:14px; padding:14px; background:rgba(255,255,255,0.03)}
+    .box h3{margin:0 0 12px; font-size:1.1rem}
+    .table{overflow-x:auto; border:1px solid var(--line); border-radius:12px}
+    table{border-collapse:collapse; width:100%; min-width:520px}
+    th,td{padding:10px 12px; border-bottom:1px solid var(--line); text-align:right; font-size:0.9rem}
+    th{font-size:0.72rem; color:var(--muted); background:rgba(255,255,255,0.05); font-weight:600}
+    tr:last-child td{border:0}
+    .status{padding:5px 9px; border-radius:999px; font-size:0.7rem; font-weight:800; background:rgba(255,255,255,0.08); display:inline-block}
+    .status.good{background:rgba(54,211,153,0.12); color:var(--green)}
+    .status.bad{background:rgba(255,107,107,0.12); color:var(--red)}
+    .status.warn{background:rgba(255,200,87,0.12); color:var(--yellow)}
+    pre{margin:0; background:#05080e; border:1px solid var(--line); border-radius:12px; padding:13px; white-space:pre-wrap; word-break:break-word; line-height:1.75; font:12px "Courier New",Consolas,monospace; max-height:340px; overflow:auto}
+    .cards{display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:9px}
+    .card{padding:12px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,0.03)}
+    .card .label{display:block; margin-bottom:8px}
+    .card b{display:block; margin-top:5px; word-break:break-word; font-size:0.95rem}
+    .checks{display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:8px}
+    .check{display:flex; justify-content:space-between; align-items:center; padding:11px; border:1px solid var(--line); border-radius:11px; background:rgba(255,255,255,0.02)}
+    .loader{display:inline-block; width:14px; height:14px; border:2px solid var(--line); border-top-color:var(--blue); border-radius:50%; animation:spin 0.65s linear infinite; vertical-align:middle; margin-left:8px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .muted{color:var(--muted)}
+    footer{text-align:center; color:var(--muted); font-size:0.7rem; padding:16px 0; margin-top:20px}
+    .danger-note{padding:10px 12px; border:1px solid rgba(255,200,87,0.2); background:rgba(255,200,87,0.08); border-radius:11px; color:#f4d997; font-size:0.76rem; margin-top:12px; line-height:1.5}
+    .success-note{padding:10px 12px; border:1px solid rgba(54,211,153,0.2); background:rgba(54,211,153,0.08); border-radius:11px; color:#52e0a9; font-size:0.76rem; margin-top:12px; line-height:1.5}
+    .spinner-text{display:flex; align-items:center; gap:8px}
+    @media(max-width:850px){.grid2{grid-template-columns:1fr}.stats{grid-template-columns:1fr}.form{grid-template-columns:1fr}.checks{grid-template-columns:1fr}.cards{grid-template-columns:1fr}}
+    @media(max-width:580px){body{padding:10px}.top{flex-direction:column; align-items:flex-start}.brand h1{font-size:1.6rem}.toolbar{width:100%; flex-direction:column}button,input,select{width:100%}.form{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <div class="brand">
+        <h1>🌐 NetScope X</h1>
+        <p>Network Diagnostics & Developer Toolkit</p>
+      </div>
+      <div class="toolbar">
+        <button id="demo" class="secondary">نمونه</button>
+        <button id="copy">کپی گزارش</button>
+        <button id="json">JSON</button>
+        <button id="csv">CSV</button>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="overview">📊 داشبورد</button>
+      <button class="tab" data-tab="dns">🔍 DNS</button>
+      <button class="tab" data-tab="http">📡 HTTP</button>
+      <button class="tab" data-tab="ip">🌍 IP Info</button>
+      <button class="tab" data-tab="ping">📍 Ping</button>
+      <button class="tab" data-tab="ports">🚪 Ports</button>
+      <button class="tab" data-tab="report">📋 گزارش</button>
+      <button class="tab" data-tab="bulk">📦 اسکن گروهی</button>
+    </nav>
+
+    <section class="panel">
+      <div class="body">
+        <div id="overview" class="tabpage active">
+          <h2>اسکن یکپارچه</h2>
+          <div class="form">
+            <input id="target" value="example.com" placeholder="example.com یا IP">
+            <select id="kind">
+              <option value="domain">Domain</option>
+              <option value="ip">IP</option>
+            </select>
+            <button id="scan">🚀 شروع اسکن کامل</button>
+          </div>
+          <div class="hint">این ابزار از قابلیت‌های مجاز مرورگر و DNS over HTTPS استفاده می‌کند. نتیجه‌ها تشخیصی هستند و جایگزین ابزارهای سیستم‌عامل نیستند.</div>
+
+          <div class="stats">
+            <div class="stat"><div class="label">✅ DNS</div><div id="sDns" class="value">--</div></div>
+            <div class="stat"><div class="label">✅ HTTP</div><div id="sHttp" class="value">--</div></div>
+            <div class="stat"><div class="label">⚡ DNS Latency</div><div id="sLat" class="value">--</div></div>
+            <div class="stat"><div class="label">📝 رکوردها</div><div id="sRec" class="value">--</div></div>
+          </div>
+
+          <div class="grid2">
+            <div class="box">
+              <h3>خلاصه هدف</h3>
+              <div class="cards">
+                <div class="card"><span class="label">Target</span><b id="vTarget">--</b></div>
+                <div class="card"><span class="label">IPv4</span><b id="v4">--</b></div>
+                <div class="card"><span class="label">IPv6</span><b id="v6">--</b></div>
+              </div>
+            </div>
+            <div class="box">
+              <h3>وضعیت</h3>
+              <div class="checks">
+                <div class="check"><span>DNS Resolve</span><b id="cDns">--</b></div>
+                <div class="check"><span>HTTP Reachability</span><b id="cHttp">--</b></div>
+                <div class="check"><span>Resolvers</span><b id="cResolvers">--</b></div>
+                <div class="check"><span>Ping Latency</span><b id="cPing">--</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="dns" class="tabpage">
+          <h2>🔍 DNS Diagnostics</h2>
+          <div class="grid2">
+            <div class="box">
+              <h3>Resolver Performance</h3>
+              <div class="table">
+                <table>
+                  <thead><tr><th>Resolver</th><th>Latency</th><th>Answers</th><th>Status</th></tr></thead>
+                  <tbody id="resolverTable"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="box">
+              <h3>DNS Records</h3>
+              <div class="table">
+                <table>
+                  <thead><tr><th>Type</th><th>Value</th><th>TTL</th></tr></thead>
+                  <tbody id="dnsTable"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="box" style="margin-top:14px">
+            <h3>DNS Raw</h3>
+            <pre id="dnsRaw">--</pre>
+          </div>
+        </div>
+
+        <div id="http" class="tabpage">
+          <h2>📡 HTTP Diagnostics</h2>
+          <div class="box">
+            <div class="form">
+              <input id="httpUrl" value="https://example.com" placeholder="https://example.com">
+              <button id="httpTest">🧪 تست HTTP</button>
+            </div>
+            <div class="stats">
+              <div class="stat"><div class="label">⏱️ زمان درخواست</div><div id="httpMs" class="value">--</div></div>
+              <div class="stat"><div class="label">📊 Status</div><div id="httpStatus" class="value">--</div></div>
+              <div class="stat"><div class="label">📄 Type</div><div id="httpType" class="value">--</div></div>
+              <div class="stat"><div class="label">🔗 CORS</div><div id="httpCors" class="value">--</div></div>
+            </div>
+            <div id="httpHeaders" style="margin-top:14px; display:none">
+              <h3>Response Headers</h3>
+              <pre id="httpHeadersText"></pre>
+            </div>
+          </div>
+          <div class="danger-note">تست HTTP به سیاست CORS سایت مقصد وابسته است؛ بنابراین «ناموفق» لزوماً به معنی Down بودن سایت نیست.</div>
+        </div>
+
+        <div id="ip" class="tabpage">
+          <h2>🌍 IP Information</h2>
+          <div class="box">
+            <button id="myIp">👁️ نمایش IP عمومی من</button>
+            <div id="ipResult" style="margin-top:12px"><pre>برای دریافت IP عمومی، دکمه بالا را بزنید.</pre></div>
+          </div>
+          <div class="danger-note">IP عمومی از یک سرویس شخص ثالث دریافت می‌شود. در صورت استفاده، سیاست حریم خصوصی همان سرویس را بررسی کنید.</div>
+        </div>
+
+        <div id="ping" class="tabpage">
+          <h2>📍 Ping Test</h2>
+          <div class="box">
+            <div class="form">
+              <input id="pingHost" value="example.com" placeholder="example.com">
+              <input id="pingCount" type="number" min="1" max="100" value="3" placeholder="تعداد">
+              <button id="pingTest">🔔 Ping</button>
+            </div>
+            <div id="pingResult" style="margin-top:12px"><pre>--</pre></div>
+          </div>
+          <p class="hint">Ping با درخواستهای HTTP/HTTPS انجام می‌شود؛ بنابراین نتیجه‌ی آن نسبت به ping سیستم‌عامل دقیق‌تر یا متفاوت‌تر است.</p>
+        </div>
+
+        <div id="ports" class="tabpage">
+          <h2>🚪 Port Check</h2>
+          <div class="form wide">
+            <input id="portHost" value="example.com" placeholder="example.com">
+            <input id="port" type="number" min="1" max="65535" value="443" placeholder="Port">
+            <button id="portTest">🔍 بررسی</button>
+          </div>
+          <p class="hint">این بخش فقط یک اتصال TCP واقعی ایجاد نمی‌کند؛ مرورگر برای چنین کاری محدودیت دارد. در عوض دسترسی HTTP/HTTPS به endpoint استاندارد را بررسی می‌کند.</p>
+          <div id="portResult" class="box" style="margin-top:12px">--</div>
+        </div>
+
+        <div id="report" class="tabpage">
+          <h2>📋 گزارش کامل</h2>
+          <pre id="reportText">هنوز گزارشی ساخته نشده است.</pre>
+        </div>
+
+        <div id="bulk" class="tabpage">
+          <h2>📦 اسکن گروهی و نامحدود</h2>
+          <div class="grid2">
+            <div class="box">
+              <h3>آی‌پی‌ها / میزبان‌ها</h3>
+              <textarea id="bulkTargets" spellcheck="false"></textarea>
+              <div class="actions" style="margin-top:10px">
+                <button id="loadDefaultTargets" class="secondary">📥 افزودن پیش‌فرض‌های بسیار زیاد</button>
+                <button id="clearTargets" class="secondary">🧹 پاک‌سازی</button>
+              </div>
+            </div>
+            <div class="box">
+              <h3>DNS رکوردها / نام دامنه‌ها</h3>
+              <textarea id="bulkDns" spellcheck="false"></textarea>
+              <div class="actions" style="margin-top:10px">
+                <button id="loadDefaultDns" class="secondary">📥 افزودن DNS پیش‌فرض</button>
+                <button id="clearDns" class="secondary">🧹 پاک‌سازی</button>
+              </div>
+            </div>
+          </div>
+          <div class="box" style="margin-top:14px">
+            <h3>تنظیمات اسکن</h3>
+            <div class="form">
+              <input id="delayMs" type="number" min="0" max="5000" value="250" placeholder="فاصله بین درخواست‌ها (ms)">
+              <input id="bulkMode" value="sequential" type="hidden">
+              <button id="bulkScan">🚀 شروع اسکن گروهی</button>
+            </div>
+            <div id="bulkStatus" class="hint" style="margin-top:10px">آی‌پی‌ها و DNS‌های زیادی را می‌توان در این قسمت وارد کرد؛ هر سطر یا کاما به‌صورت یک هدف در نظر گرفته می‌شود.</div>
+          </div>
+          <div class="box" style="margin-top:14px">
+            <h3>نتایج اسکن گروهی</h3>
+            <pre id="bulkResult">هنوز نتیجه‌ای ثبت نشده است.</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>NetScope X • Browser-based diagnostics • برای تست‌های مجاز سیستم‌ها و دامنه‌هایی که اجازه بررسی آن‌ها را دارید. v2.1</footer>
+  </div>
+
+  <script>
+    'use strict';
+    const $ = (id) => document.getElementById(id);
+    const RESOLVERS = [
+      {name:'Cloudflare', url:'https://cloudflare-dns.com/dns-query'},
+      {name:'Google', url:'https://dns.google/resolve'},
+      {name:'Quad9', url:'https://dns.quad9.net/dns-query'},
+      {name:'OpenDNS', url:'https://doh.opendns.com/dns-query'},
+      {name:'Adguard', url:'https://dns.adguard.com/dns-query'},
+      {name:'Mullvad', url:'https://doh.mullvad.net/dns-query'},
+      {name:'Ali', url:'https://dns.alidns.com/dns-query'},
+      {name:'Tencent', url:'https://doh.cloud.tencent.com/dns-query'}
+    ];
+    const TYPES = ['A','AAAA','CNAME','MX','NS','TXT','SOA','CAA'];
+    const CACHE = new Map();
+    let DATA = { target:'', type:'', records:[], resolvers:[], http:null, publicIp:null, pingStats:null };
+
+    function esc(v){
+      return String(v ?? '').replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]));
+    }
+    function fmt(v){ return v == null ? '--' : Math.round(v) + ' ms'; }
+    function latencyClass(v){ return v < 100 ? 'good' : v < 300 ? 'warn' : 'bad'; }
+    function set(id, value, extraClass=''){ const el = $(id); if (!el) return; el.textContent = value; el.className = 'value ' + (extraClass || ''); }
+    function validDomain(v){ return /^(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$/.test(v); }
+    function validIp(v){ return /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(v); }
+    function clean(v){ return (v || '').trim().replace(/^https?:\/\//i,'').replace(/\/.*$/,'').replace(/\.$/,'').toLowerCase(); }
+    function normalizeHost(v){ return clean(v) || ''; }
+    function typeName(n){ return {1:'A',2:'NS',5:'CNAME',6:'SOA',15:'MX',16:'TXT',28:'AAAA',257:'CAA'}[n] || String(n); }
+    function getCacheKey(base, name, type){ return `${base}|${name}|${type}`; }
+
+    async function doh(base, name, type){
+      const key = getCacheKey(base, name, type);
+      if (CACHE.has(key)) return CACHE.get(key);
+      const url = new URL(base);
+      url.searchParams.set('name', name);
+      url.searchParams.set('type', type);
+      const start = performance.now();
+      try {
+        const res = await fetch(url.toString(), {headers:{accept:'application/dns-json'}, cache:'no-store', signal:AbortSignal.timeout(10000)});
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        const result = {json, time: performance.now() - start};
+        CACHE.set(key, result);
+        return result;
+      } catch (err) {
+        throw new Error(`Resolver error: ${err.message}`);
+      }
+    }
+
+    async function resolveOne(name, type, maxResolvers=8){
+      const selected = RESOLVERS.slice(0, maxResolvers);
+      let lastErr = null;
+      for (const r of selected) {
+        try {
+          const x = await doh(r.url, name, type);
+          return {...x, resolver:r.name};
+        } catch (err) {
+          lastErr = err;
+        }
+      }
+      throw lastErr || new Error('All resolvers failed');
+    }
+
+    async function resolveAll(name){
+      const records = [];
+      await Promise.allSettled(TYPES.map(async (t)=>{
+        try {
+          const x = await resolveOne(name, t, 8);
+          (x.json.Answer || []).forEach((a)=>{
+            if (a && a.data) {
+              records.push({ type:typeName(a.type), value:a.data, ttl:a.TTL ?? 'N/A' });
+            }
+          });
+        } catch (err) {
+          // continue silently
+        }
+      }));
+      const unique = new Map();
+      records.forEach((item) => {
+        const k = `${item.type}|${item.value}|${item.ttl}`;
+        if (!unique.has(k)) unique.set(k, item);
+      });
+      return [...unique.values()];
+    }
+
+    async function resolverTest(name, maxResolvers=50){
+      const selected = RESOLVERS.slice(0, maxResolvers);
+      return Promise.all(selected.map(async (r) => {
+        try {
+          const x = await doh(r.url, name, 'A');
+          return { name:r.name, time:x.time, answers:(x.json.Answer || []).length, ok:true };
+        } catch (err) {
+          return { name:r.name, time:null, answers:0, ok:false };
+        }
+      }));
+    }
+
+    async function httpProbe(url){
+      const start = performance.now();
+      const res = await fetch(url, {method:'GET', mode:'cors', cache:'no-store'});
+      const elapsed = performance.now() - start;
+      const contentType = (res.headers.get('content-type') || '').split(';')[0] || 'unknown';
+      const headers = {};
+      res.headers.forEach((v,k)=>headers[k]=v);
+      return { ok:res.ok, status:res.status, elapsed, type:contentType, headers, cors:'cors' };
+    }
+
+    function renderResolvers(rows){
+      const body = $('resolverTable');
+      if (!body) return;
+      body.innerHTML = rows.map((r)=>
+        `<tr>
+          <td>${esc(r.name)}</td>
+          <td class="${r.time != null ? latencyClass(r.time) : 'bad'}">${r.time == null ? 'ERR' : fmt(r.time)}</td>
+          <td>${r.answers}</td>
+          <td><span class="status ${r.ok ? 'good' : 'bad'}">${r.ok ? 'OK' : 'Fail'}</span></td>
+        </tr>`
+      ).join('');
+    }
+
+    function renderDnsTable(rows){
+      const body = $('dnsTable');
+      if (!body) return;
+      body.innerHTML = rows.map(r => `<tr><td>${esc(r.type)}</td><td>${esc(r.value)}</td><td>${esc(r.ttl)}</td></tr>`).join('');
+      if (!rows.length) body.innerHTML = '<tr><td colspan="3">--</td></tr>';
+    }
+
+    function updateOverview(data){
+      const dnsResolve = data.records.length ? '✅' : '❌';
+      const httpReach = data.http && data.http.ok ? '✅' : '❌';
+      const pingText = data.pingStats && data.pingStats.avg ? fmt(data.pingStats.avg) : '--';
+      set('sDns', data.records.length ? `${data.records.length} Rec` : 'No records', data.records.length ? 'good' : 'bad');
+      set('sHttp', data.http && data.http.ok ? `HTTP ${data.http.status}` : 'Failed', data.http && data.http.ok ? 'good' : 'bad');
+      set('sLat', data.resolvers && data.resolvers.length ? fmt(Math.min(...data.resolvers.filter(r => r.time != null).map(r => r.time))) : '--', 'good');
+      set('sRec', String(data.records.length || 0), 'good');
+      $('vTarget').textContent = data.target || '--';
+      $('v4').textContent = data.ipv4 || '--';
+      $('v6').textContent = data.ipv6 || '--';
+      $('cDns').textContent = dnsResolve;
+      $('cHttp').textContent = httpReach;
+      $('cResolvers').textContent = String(data.resolvers.length || 0);
+      $('cPing').textContent = pingText;
+    }
+
+    function renderReport(data){
+      const box = $('reportText');
+      if (!box) return;
+      const lines = [];
+      lines.push('NetScope X Report');
+      lines.push('Target: ' + (data.target || 'N/A'));
+      lines.push('IPv4: ' + (data.ipv4 || 'N/A'));
+      lines.push('IPv6: ' + (data.ipv6 || 'N/A'));
+      lines.push('DNS records: ' + (data.records || []).length);
+      lines.push('HTTP: ' + (data.http ? `${data.http.status} / ${data.http.type}` : 'N/A'));
+      lines.push('Ping avg: ' + (data.pingStats && data.pingStats.avg ? fmt(data.pingStats.avg) : 'N/A'));
+      lines.push('');
+      (data.records || []).forEach((r)=> lines.push(`${r.type} ${r.value} TTL=${r.ttl}`));
+      box.textContent = lines.join('\n');
+    }
+
+    async function runQuickScan(target){
+      const normalized = normalizeHost(target);
+      if (!normalized) return;
+      const now = performance.now();
+      DATA.target = normalized;
+      DATA.records = [];
+      DATA.resolvers = [];
+      DATA.http = null;
+      DATA.pingStats = null;
+
+      try {
+        const dnsRows = await resolveAll(normalized);
+        DATA.records = dnsRows;
+        const rows = await resolverTest(normalized, 8);
+        DATA.resolvers = rows;
+        renderResolvers(rows);
+        renderDnsTable(dnsRows);
+        $('dnsRaw').textContent = JSON.stringify({target: normalized, records:dnsRows, resolvers:rows}, null, 2);
+
+        const probe = await httpProbe('https://' + normalized);
+        DATA.http = probe;
+        $('httpStatus').textContent = String(probe.status);
+        $('httpMs').textContent = fmt(probe.elapsed);
+        $('httpType').textContent = probe.type || 'unknown';
+        $('httpCors').textContent = probe.cors || 'n/a';
+        $('httpHeadersText').textContent = JSON.stringify(probe.headers, null, 2);
+        $('httpHeaders').style.display = 'block';
+
+        const ping = await pingProbe(normalized, 3);
+        DATA.pingStats = ping;
+
+        const a = await resolveOne(normalized, 'A', 4).catch(()=>null);
+        const aaaa = await resolveOne(normalized, 'AAAA', 4).catch(()=>null);
+        DATA.ipv4 = a && a.json && a.json.Answer ? a.json.Answer.map(x => x.data).filter(Boolean).join(', ') : 'N/A';
+        DATA.ipv6 = aaaa && aaaa.json && aaaa.json.Answer ? aaaa.json.Answer.map(x => x.data).filter(Boolean).join(', ') : 'N/A';
+
+        updateOverview(DATA);
+        renderReport(DATA);
+        $('reportText').textContent = $('reportText').textContent + '\n\nScan completed in ' + Math.round(performance.now() - now) + ' ms';
+      } catch (err) {
+        console.error(err);
+        $('dnsRaw').textContent = err.message;
+      }
+    }
+
+    async function pingProbe(host, count=3){
+      const results = [];
+      for (let i = 0; i < count; i++) {
+        const start = performance.now();
+        try {
+          await fetch('https://' + host, {mode:'cors', cache:'no-store'});
+          results.push(performance.now() - start);
+        } catch (err) {
+          results.push(null);
+        }
+      }
+      const valid = results.filter(v => v != null);
+      const avg = valid.length ? valid.reduce((a,b)=>a+b, 0) / valid.length : null;
+      const text = valid.length ? valid.map(v => Math.round(v) + 'ms').join(', ') : 'No successful responses';
+      $('pingResult').innerHTML = '<pre>' + esc(text) + '</pre>';
+      return { attempts: count, success: valid.length, avg, samples: valid };
+    }
+
+    function parseInputList(str){
+      if (!str) return [];
+      const cleaned = str.replace(/[\r]+/g, '\n').replace(/[;,]/g, '\n');
+      const items = cleaned.split(/\n+/).map(x => x.trim()).filter(Boolean);
+      const expanded = [];
+      for (const item of items) {
+        if (item.includes('-') && /\d+\.\d+\.\d+\.\d+\s*-\s*\d+\.\d+\.\d+\.\d+/.test(item)) {
+          const match = item.match(/(\d+\.\d+\.\d+\.\d+)\s*-\s*(\d+\.\d+\.\d+\.\d+)/);
+          if (match) {
+            const start = ipToInt(match[1]);
+            const end = ipToInt(match[2]);
+            const low = Math.min(start, end), high = Math.max(start, end);
+            for (let i = low; i <= high; i++) expanded.push(intToIp(i));
+            continue;
+          }
+        }
+        if (/^\d+\.\d+\.\d+\.\d+$/.test(item) || validDomain(item) || /^\d+\.\d+\.\d+\.\d+\-\d+$/.test(item)) {
+          expanded.push(item);
+        }
+      }
+      return [...new Set(expanded)];
+    }
+
+    function ipToInt(ip){
+      return ip.split('.').reduce((a, b) => (a << 8) + Number(b), 0) >>> 0;
+    }
+    function intToIp(num){
+      return [(num >>> 24) & 255, (num >>> 16) & 255, (num >>> 8) & 255, num & 255].join('.');
+    }
+
+    function generateDefaultTargets(){
+      const ips = [];
+      const ranges = [
+        '192.168.1.1-192.168.1.25',
+        '10.0.0.1-10.0.0.20',
+        '172.16.0.1-172.16.0.18',
+        '8.8.8.8',
+        '1.1.1.1',
+        '9.9.9.9',
+        '208.67.222.222',
+        '223.5.5.5',
+        '137.74.187.104',
+        '93.184.216.34'
+      ];
+      ranges.forEach(r => { ips.push(...parseInputList(r)); });
+      const domains = ['example.com','google.com','github.com','microsoft.com','apple.com','cloudflare.com','netflix.com','amazon.com','paypal.com','yahoo.com','duckduckgo.com','wikipedia.org','stackoverflow.com','bing.com'];
+      return [...new Set([...ips, ...domains])].join('\n');
+    }
+
+    function generateDefaultDns(){
+      return ['example.com','google.com','github.com','microsoft.com','dns.google','cloudflare.com','stackoverflow.com','localhost','api.github.com','www.example.com','mail.google.com','login.microsoftonline.com'].join('\n');
+    }
+
+    async function bulkScanAll(){
+      const targets = parseInputList($('bulkTargets').value);
+      const dnsList = parseInputList($('bulkDns').value);
+      const delayMs = Number($('delayMs').value || 250);
+      const items = [...new Set([...targets, ...dnsList])].filter(Boolean);
+
+      if (!items.length) {
+        $('bulkResult').textContent = 'هیچ آی‌پی یا دامنه‌ای وارد نشده است.';
+        return;
+      }
+
+      $('bulkStatus').textContent = 'در حال اسکن گروهی ' + items.length + ' مورد؛ زمان‌بندی: ' + delayMs + ' میلی‌ثانیه.';
+      const rows = [];
+      for (let i = 0; i < items.length; i++) {
+        const target = items[i];
+        const entry = { index:i + 1, target, status:'pending', dns:'--', http:'--', details:'' };
+        try {
+          const dns = await resolveAll(normalizeHost(target)).catch(() => []);
+          entry.dns = dns.length ? `${dns.length} record` : 'No record';
+          entry.status = dns.length ? 'ok' : 'warn';
+          try {
+            const check = await httpProbe('https://' + normalizeHost(target));
+            entry.http = check.ok ? `HTTP ${check.status}` : `Fail ${check.status}`;
+            entry.details = check.ok ? 'Reachable' : 'Not reachable / CORS-limited';
+          } catch (err) {
+            entry.http = 'Failed';
+            entry.details = err.message;
+          }
+        } catch (err) {
+          entry.status = 'bad';
+          entry.details = err.message;
+          entry.dns = 'ERR';
+          entry.http = 'ERR';
+        }
+        rows.push(entry);
+        if (i < items.length - 1 && delayMs > 0) {
+          await new Promise(r => setTimeout(r, delayMs));
+        }
+      }
+
+      const output = rows.map(r => `${r.index}. ${r.target} | DNS=${r.dns} | HTTP=${r.http} | ${r.details}`).join('\n');
+      $('bulkResult').textContent = output;
+      $('bulkStatus').textContent = 'اسکن گروهی تکمیل شد. تعداد کل اهداف: ' + rows.length;
+    }
+
+    $('scan').addEventListener('click', () => runQuickScan($('target').value));
+    $('httpTest').addEventListener('click', async () => {
+      const url = $('httpUrl').value.trim();
+      if (!url) return;
+      try {
+        const res = await httpProbe(url);
+        $('httpStatus').textContent = String(res.status);
+        $('httpMs').textContent = fmt(res.elapsed);
+        $('httpType').textContent = res.type || 'unknown';
+        $('httpCors').textContent = res.cors || 'n/a';
+        $('httpHeadersText').textContent = JSON.stringify(res.headers, null, 2);
+        $('httpHeaders').style.display = 'block';
+      } catch (err) {
+        $('httpStatus').textContent = 'ERR';
+        $('httpMs').textContent = '--';
+        $('httpType').textContent = 'failed';
+        $('httpCors').textContent = 'n/a';
+        $('httpHeadersText').textContent = err.message;
+        $('httpHeaders').style.display = 'block';
+      }
+    });
+
+    $('pingTest').addEventListener('click', async () => {
+      const host = $('pingHost').value.trim() || 'example.com';
+      const count = Number($('pingCount').value || 3);
+      await pingProbe(host, count);
+    });
+
+    $('myIp').addEventListener('click', async () => {
+      try {
+        const res = await fetch('https://api.ipify.org?format=json');
+        const data = await res.json();
+        $('ipResult').innerHTML = '<pre>' + esc(JSON.stringify(data, null, 2)) + '</pre>';
+      } catch (err) {
+        $('ipResult').innerHTML = '<pre>' + esc(err.message) + '</pre>';
+      }
+    });
+
+    $('demo').addEventListener('click', () => {
+      $('target').value = 'example.com';
+      $('kind').value = 'domain';
+      $('httpUrl').value = 'https://example.com';
+      $('pingHost').value = 'example.com';
+      runQuickScan('example.com');
+    });
+
+    $('copy').addEventListener('click', () => {
+      const text = $('reportText').textContent || '';
+      navigator.clipboard?.writeText(text).catch(()=>{});
+    });
+
+    $('json').addEventListener('click', () => {
+      const text = JSON.stringify(DATA, null, 2);
+      $('reportText').textContent = text;
+    });
+
+    $('csv').addEventListener('click', () => {
+      const rows = [
+        ['target', 'ipv4', 'ipv6', 'dns_records', 'http_status', 'ping_avg'],
+        [DATA.target || '', DATA.ipv4 || '', DATA.ipv6 || '', String(DATA.records?.length || 0), String(DATA.http?.status || ''), DATA.pingStats?.avg ? String(Math.round(DATA.pingStats.avg)) : '']
+      ];
+      const csv = rows.map(r => r.join(',')).join('\n');
+      $('reportText').textContent = csv;
+    });
+
+    document.querySelectorAll('.tab').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('active', b === btn));
+        document.querySelectorAll('.tabpage').forEach((p) => p.classList.toggle('active', p.id === btn.dataset.tab));
+      });
+    });
+
+    $('loadDefaultTargets').addEventListener('click', () => {
+      $('bulkTargets').value = generateDefaultTargets();
+    });
+    $('loadDefaultDns').addEventListener('click', () => {
+      $('bulkDns').value = generateDefaultDns();
+    });
+    $('clearTargets').addEventListener('click', () => $('bulkTargets').value = '');
+    $('clearDns').addEventListener('click', () => $('bulkDns').value = '');
+    $('bulkScan').addEventListener('click', bulkScanAll);
+
+    $('bulkTargets').value = generateDefaultTargets();
+    $('bulkDns').value = generateDefaultDns();
+    runQuickScan('example.com');
+  </script>
+</body>
+</html>
